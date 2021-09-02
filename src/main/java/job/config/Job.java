@@ -1,14 +1,13 @@
 package job.config;
 
-import job.enums.Priority;
 import job.enums.State;
-import job.schedule.SchedulableJob;
+import job.schedule.Task;
 import lombok.Data;
 
 import java.util.concurrent.Callable;
 
 @Data
-public class Job implements SchedulableJob{
+public class Job implements Task {
     private String jobId;
     private JobConfigurations jobConfigurations;
     private State jobState = null;

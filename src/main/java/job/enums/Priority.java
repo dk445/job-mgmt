@@ -9,7 +9,7 @@ public enum Priority {
     HIGH(1);
 
     @Getter
-    Integer priority;
+    Integer value;
 
-    Priority(Integer priority){this.priority = priority;}
+    Priority(Integer value){this.value = value;}
 }
