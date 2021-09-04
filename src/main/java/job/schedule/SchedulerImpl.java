@@ -2,114 +2,98 @@ package job.schedule;
 
 import job.config.Job;
 import job.enums.State;
-import lombok.Getter;
-
-import java.util.Calendar;
+import java.sql.Timestamp;
+import java.util.*;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.PriorityBlockingQueue;
 
 public class SchedulerImpl implements Scheduler{
 
     private static final int CAPACITY = 10;
+    private final TreeMap<Timestamp, List<Job>> jobsToBeExecute= new TreeMap<>();
+
+    private final Object lock = new Object();
 
     /*
-    * Inserting jobs by their priority
+    * sort jobs by their priority
     */
-    private final BlockingQueue<TimedTask> queue = new PriorityBlockingQueue<>(CAPACITY,
+    private final BlockingQueue<Job> queue = new PriorityBlockingQueue<>(CAPACITY,
             (s, t) -> {
-                if (s.getJob().getJobConfigurations().getPriority().getValue() > t.getJob().getJobConfigurations().getPriority().getValue())
+                if (s.getJobConfigurations().getPriority().getValue() > t.getJobConfigurations().getPriority().getValue())
                     return 1;
-                else if (s.getJob().getJobConfigurations().getPriority().getValue() < t.getJob().getJobConfigurations().getPriority().getValue())
+                else if (s.getJobConfigurations().getPriority().getValue() < t.getJobConfigurations().getPriority().getValue())
                     return -1;
                 return 0;
 
             });
 
-    private final Object lock = new Object();
     private volatile boolean running = true;
 
-
     @Override
-    public void start() throws InterruptedException {
+    public void start() throws Exception {
         while (running) {
-            TimedTask task = queue.take();
-            if (task != null) {
 
-                task.run(); // Ideally this should be run in a separate thread.
-            }
-            waitForNextTask();
-        }
-    }
+            Job freshJob;
+            freshJob = queue.take();
+            if (freshJob != null) {
+                try {
 
-    @Override
-    public void waitForNextTask() throws InterruptedException {
-        synchronized (lock) {
-            TimedTask nextTask = queue.peek();
-            while (nextTask == null || !nextTask.shouldRunNow()) {
-                if (nextTask == null) {
-                    lock.wait();
-                } else {
-                    lock.wait(nextTask.runFromNow());
+                    while(freshJob.getJobState()!=State.QUEUED){}
+
+                    freshJob.setJobState(State.RUNNING); // updating job status to running
+                    System.out.println(freshJob.getJobId() + " is running.");
+
+                    freshJob.run();
+
+                    freshJob.setJobState(State.SUCCESS); // updating job status to success
+                    System.out.println(freshJob.getJobId() + " is completed successfully.");
+
+                } catch (Exception ex){
+                    freshJob.setJobState(State.FAILED);  // updating job status to failed
+                    System.out.println(freshJob.getJobId() + " is failed due to "+ex.toString());
                 }
-                nextTask = queue.peek();
             }
         }
     }
 
     public void add(Job job) {
-        add(job,0);
+        add(job, new Timestamp(System.currentTimeMillis()));
     }
 
     @Override
-    public void add(Job job, long delayMs) {
+    public void add(Job job, Timestamp scheduleTime) {
         synchronized (lock) {
-            queue.offer(TimedTask.fromTask(job, delayMs));
-            job.setJobState(State.QUEUED);  // updating job status to queued
-            System.out.println(job.getJobId() + " is queued.");
-            lock.notify();
-        }
-    }
+            if(jobsToBeExecute.containsKey(scheduleTime)){
+                jobsToBeExecute.get(scheduleTime).add(job);
+            }
+            else {
+                List<Job> jobList = new ArrayList<>();
 
-    @Getter
-    private static class TimedTask {
-        private Job job;
-        private Calendar scheduledTime;
-
-        public TimedTask(Job job, Calendar scheduledTime) {
-            this.job = job;
-            this.scheduledTime = scheduledTime;
-        }
-
-        public static TimedTask fromTask(Job job, long delayMs) {
-            Calendar now = Calendar.getInstance();
-            now.setTimeInMillis(now.getTimeInMillis() + delayMs);
-            return new TimedTask(job, now);
-        }
-
-        public Calendar getScheduledTime() {
-            return scheduledTime;
-        }
-
-        public long runFromNow() {
-            return scheduledTime.getTimeInMillis() - Calendar.getInstance().getTimeInMillis();
-        }
-
-        public boolean shouldRunNow() {
-            return runFromNow() <= 0;
-        }
-
-        public void run() {
-            job.setJobState(State.RUNNING); // updating job status to running
-            System.out.println(job.getJobId() + " is running.");
-            try {
-                job.run();
-                job.setJobState(State.SUCCESS); // updating job status to success
-                System.out.println(job.getJobId() + " is completed successfully.");
-            } catch (Exception ex){
-                job.setJobState(State.FAILED);  // updating job status to failed
-                System.out.println(job.getJobId() + " is failed due to "+ex.toString());
+                jobList.add(job);
+                jobsToBeExecute.put(scheduleTime, jobList);
             }
         }
     }
 
+    @Override
+    public void startAddingToQueue() {
+        while (running){
+            try {
+                if (!jobsToBeExecute.isEmpty() && jobsToBeExecute.firstEntry().getKey().before(new Timestamp(System.currentTimeMillis()))) {
+                    synchronized (lock) {
+                        queue.addAll(jobsToBeExecute.firstEntry().getValue());
+                        for (Job newJob:jobsToBeExecute.firstEntry().getValue()) {
+                            newJob.setJobState(State.QUEUED);  // updating jobs status to queued
+                            System.out.println(newJob.getJobId() + " is queued.");
+                        }
+                        jobsToBeExecute.pollFirstEntry();
+
+                    }
+
+                }
+            }catch (Exception ex){
+                System.out.println(ex);
+            }
+        }
+    }
 }

@@ -2,11 +2,13 @@ package job.schedule;
 
 import job.config.Job;
 
+import java.sql.Timestamp;
+
 public interface Scheduler {
 
-    void start() throws InterruptedException;
+    void start() throws Exception;
 
-    void waitForNextTask() throws InterruptedException;
+    void add(Job job, Timestamp scheduleTime);
 
-    void add(Job job, long delayMs);
+    void startAddingToQueue();
 }
