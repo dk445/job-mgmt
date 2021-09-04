@@ -56,6 +56,7 @@ public class SchedulerImpl implements Scheduler{
         }
     }
 
+    @Override
     public void add(Job job) {
         add(job, new Timestamp(System.currentTimeMillis()));
     }

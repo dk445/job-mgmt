@@ -8,6 +8,8 @@ public interface Scheduler {
 
     void start() throws Exception;
 
+    void add(Job job);
+
     void add(Job job, Timestamp scheduleTime);
 
     void startAddingToQueue();
