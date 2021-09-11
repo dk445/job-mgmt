@@ -1,4 +1,4 @@
-package com.scheduler.job.config;
+package com.scheduler.job.job;
 
 import com.scheduler.job.enums.State;
 import com.scheduler.job.schedule.SchedulerImpl;
@@ -7,6 +7,14 @@ import lombok.Data;
 
 import java.util.concurrent.Callable;
 import java.util.logging.Logger;
+
+/**
+ * prototype of each Job that contains
+ * String JobId - Id of job
+ * Object JobConfiguration - Configuration of specific job
+ * Object State - State of job at any point of time
+ * Object Callable (executable job code) - actual executable job code
+ */
 
 @Data
 public class Job implements Task {
@@ -17,16 +25,29 @@ public class Job implements Task {
 
     private static Logger log = Logger.getLogger(SchedulerImpl.class.getName());
 
+    /**
+     * Constructor for Job
+     * @param jobId
+     * @param jobConfigurations
+     * @param executableJob
+     */
     public Job(String jobId, JobConfigurations jobConfigurations, Callable executableJob) {
         this.jobId = jobId;
         this.jobConfigurations = jobConfigurations;
         this.executableJob =executableJob;
     }
 
+    /**
+     * State of job at any point of time can be define as
+     * Queued - job is scheduled for execution
+     * Running - job is running
+     * Successful - job is completed successfully
+     * Failed - job is failed due to exception/error
+     * @param jobState
+     */
     public void setJobState(State jobState) {
         this.jobState = jobState;
         log.info("Job with jobId : "+this.getJobId()+" is "+this.getJobState().getState());
-//        System.out.println("Job with jobId : "+this.getJobId()+" is "+this.getJobState().getState());
     }
 
     @Override
@@ -34,21 +55,13 @@ public class Job implements Task {
         try {
 
             this.setJobState(State.RUNNING); // updating job status to running
-
-            try {
-                this.executableJob.call();
-            } catch (Exception e) {
-                e.printStackTrace();
-            }
-
+            this.executableJob.call();
             this.setJobState(State.SUCCESS); // updating job status to success
-
 
 
         } catch (Exception e) {
 
             this.setJobState(State.FAILED);  // updating job status to failed
-            e.printStackTrace();
 
         }
     }
