@@ -10,16 +10,13 @@ import lombok.Data;
 @Data
 public class JobConfigurations {
 
-    private String jobName;
     private Priority priority;
 
     /**
      * Constructor for Job Configuration
-     * @param jobName
      * @param priority
      */
-    public JobConfigurations(String jobName, Priority priority) {
-        this.jobName = jobName;
+    public JobConfigurations(Priority priority) {
         this.priority = priority;
     }
 }

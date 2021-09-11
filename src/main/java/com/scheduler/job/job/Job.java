@@ -17,11 +17,11 @@ import java.util.logging.Logger;
  */
 
 @Data
-public class Job implements Task {
+public class Job implements Runnable {
     private String jobId;
     private JobConfigurations jobConfigurations;
     private State jobState = null;
-    private Callable executableJob;
+    private Runnable runnable;
 
     private static Logger log = Logger.getLogger(SchedulerImpl.class.getName());
 
@@ -29,12 +29,12 @@ public class Job implements Task {
      * Constructor for Job
      * @param jobId
      * @param jobConfigurations
-     * @param executableJob
+     * @param runnable
      */
-    public Job(String jobId, JobConfigurations jobConfigurations, Callable executableJob) {
+    public Job(String jobId, JobConfigurations jobConfigurations, Runnable runnable) {
         this.jobId = jobId;
         this.jobConfigurations = jobConfigurations;
-        this.executableJob =executableJob;
+        this.runnable = runnable;
     }
 
     /**
@@ -47,17 +47,17 @@ public class Job implements Task {
      */
     public void setJobState(State jobState) {
         this.jobState = jobState;
-        log.info("Job with jobId : "+this.getJobId()+" is "+this.getJobState().getState());
+        log.info("Job State Changed. JobId :" + this.getJobId() + " is " + this.getJobState().getState());
     }
 
     @Override
     public void run() {
+
         try {
 
             this.setJobState(State.RUNNING); // updating job status to running
-            this.executableJob.call();
+            this.runnable.run();
             this.setJobState(State.SUCCESS); // updating job status to success
-
 
         } catch (Exception e) {
 
