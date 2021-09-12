@@ -26,9 +26,8 @@ public class Application {
         scheduler.add(new Job("J03",new JobConfigurations(Priority.HIGH), new RunnableJob()));
 
         //stop the scheduler after 20 seconds.
-        Thread.sleep(1000 * 20);
+        Thread.sleep(1000 * 2);
         scheduler.stop();
-
     }
     static class RunnableJob implements Runnable {
         @Override

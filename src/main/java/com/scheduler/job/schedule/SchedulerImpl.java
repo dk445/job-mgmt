@@ -117,8 +117,16 @@ public class SchedulerImpl implements Scheduler{
     @Override
     public void stop(){
         running = false;
-        executorService.shutdown();
-        scheduledExecutorService.shutdownNow();
+
+        try {
+            executorService.shutdown();
+            scheduledExecutorService.shutdownNow();
+            executorService.awaitTermination(5, TimeUnit.SECONDS);
+            scheduledExecutorService.awaitTermination(5, TimeUnit.SECONDS);
+        } catch (InterruptedException e) {
+            log.log(Level.SEVERE, "InterruptedException in stop", e);
+        }
+
         jobsToBeExecute.clear();
         queue.clear();
     }
@@ -130,7 +138,9 @@ public class SchedulerImpl implements Scheduler{
     private class ProcessTaskQueue implements Runnable {
         @Override
         public void run() {
+            System.out.println("ProcessTaskQueue start ####### ");
             while (running) {
+                System.out.println("inside ProcessTaskQueue start ####### ");
                 try {
                     Job freshJob;
                     freshJob = queue.take();
@@ -154,8 +164,9 @@ public class SchedulerImpl implements Scheduler{
     private class ProcessTimedTasks implements Runnable {
         @Override
         public void run() {
+            System.out.println("ProcessTimedTasks start ####### ");
             while (running){
-
+                System.out.println("inside");
                 try {
                     if (!jobsToBeExecute.isEmpty() && jobsToBeExecute.firstEntry().getKey() < System.currentTimeMillis()) {
                         for (Job newJob:jobsToBeExecute.firstEntry().getValue()) {
