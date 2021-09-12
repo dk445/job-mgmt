@@ -99,7 +99,6 @@ public class SchedulerImpl implements Scheduler{
                 try {
                     Job freshJob;
                     freshJob = queue.take();
-                    System.out.println(freshJob);
                     if (freshJob != null) {
                         executorService.submit(freshJob);
                     }
@@ -126,7 +125,6 @@ public class SchedulerImpl implements Scheduler{
                         for (Job newJob:jobsToBeExecute.firstEntry().getValue()) {
                             newJob.setJobState(State.QUEUED);  // updating jobs status to queued
                         }
-                        System.out.println(jobsToBeExecute.firstEntry().getValue());
                         jobsToBeExecute.firstEntry().getValue().forEach( queue::add );
                         jobsToBeExecute.pollFirstEntry();
                     }
