@@ -10,6 +10,11 @@ import com.scheduler.job.job.Job;
 public interface Scheduler {
 
     /**
+     * Stop the scheduler execution engine
+     */
+    void start();
+
+    /**
      * Adding jobs for execution
      * @param job
      * @throws SchedulerImpl.InvalidEngineStateException
@@ -25,7 +30,7 @@ public interface Scheduler {
     void add(Job job, Long scheduleTime) throws SchedulerImpl.InvalidEngineStateException;
 
     /**
-     * Stop the execution engine
+     * Stop the scheduler execution engine
      */
     void stop();
 

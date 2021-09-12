@@ -20,9 +20,10 @@ public class SchedulerImplTest {
         Scheduler scheduler = new SchedulerImpl(1);
         Queue<String> actualOutputQueue = new ConcurrentLinkedQueue<>();
 
+        scheduler.start();
         scheduler.add(new Job("job1", new JobConfigurations(Priority.MEDIUM), new TestJob(actualOutputQueue, "job1")));
 
-        Thread.sleep( 1000);
+        Thread.sleep( 3000);
         scheduler.stop();
 
 
@@ -38,6 +39,7 @@ public class SchedulerImplTest {
         Queue<String> actualOutputQueue = new ConcurrentLinkedQueue<String>();
 
 
+        scheduler.start();
         scheduler.add(new Job("job1", new JobConfigurations(Priority.MEDIUM), new TestJob(actualOutputQueue, "job1")));
         scheduler.add(new Job("job2", new JobConfigurations(Priority.MEDIUM), new TestJob(actualOutputQueue, "job2")));
         scheduler.add(new Job("job3", new JobConfigurations(Priority.MEDIUM), new TestJob(actualOutputQueue, "job3")));
@@ -51,12 +53,32 @@ public class SchedulerImplTest {
     }
 
     @Test
-    public void single_thread_scheduled_multiple_job_same_priority() throws Exception{
+    public void single_thread_multiple_jobs_different_priority() throws Exception{
 
         Scheduler scheduler = new SchedulerImpl(1);
         Queue<String> actualOutputQueue = new ConcurrentLinkedQueue<String>();
 
 
+        scheduler.start();
+        scheduler.add(new Job("job1", new JobConfigurations(Priority.HIGH), new TestJob(actualOutputQueue, "job1")));
+        scheduler.add(new Job("job2", new JobConfigurations(Priority.MEDIUM), new TestJob(actualOutputQueue, "job2")));
+        scheduler.add(new Job("job3", new JobConfigurations(Priority.HIGH), new TestJob(actualOutputQueue, "job3")));
+
+        Thread.sleep( 2000);
+        scheduler.stop();
+
+        Assert.assertEquals(actualOutputQueue,
+                            getExpectedOutputQueue(Arrays.asList("job1#1", "job1#2", "job1#3", "job3#1", "job3#2", "job3#3", "job2#1", "job2#2", "job2#3")));
+
+    }
+
+    @Test
+    public void single_thread_scheduled_multiple_job_same_priority() throws Exception{
+
+        Scheduler scheduler = new SchedulerImpl(1);
+        Queue<String> actualOutputQueue = new ConcurrentLinkedQueue<String>();
+
+        scheduler.start();
         scheduler.add(new Job("job1", new JobConfigurations(Priority.MEDIUM), new TestJob(actualOutputQueue, "job1")), System.currentTimeMillis()+100);
         scheduler.add(new Job("job2", new JobConfigurations(Priority.MEDIUM), new TestJob(actualOutputQueue, "job2")), System.currentTimeMillis());
 

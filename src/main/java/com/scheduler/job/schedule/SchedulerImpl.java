@@ -22,10 +22,12 @@ import java.util.logging.Logger;
 public class SchedulerImpl implements Scheduler{
 
     private static final int CAPACITY = 10;
+    private final int maxConcurrency;
     private final TreeMap<Long, List<Job>> jobsToBeExecute= new TreeMap<>();
+    private volatile boolean running = false;
 
-    private final ExecutorService executorService;
-    private final ScheduledExecutorService scheduledExecutorService;
+    private ExecutorService executorService;
+    private ScheduledExecutorService scheduledExecutorService;
 
     private static final Logger log = Logger.getLogger(SchedulerImpl.class.getName());
 
@@ -34,6 +36,12 @@ public class SchedulerImpl implements Scheduler{
      * @param maxConcurrency the number of jobs that can run in parallel in this scheduler.
      */
     public SchedulerImpl(int maxConcurrency){
+        this.maxConcurrency = maxConcurrency;
+    }
+
+    @Override
+    public void start() {
+        running = true;
         //all the submitted jobs will run in it's own thread using this executor service.
         //+1 as one thread is used by ProcessTaskQueue task.
         executorService = Executors.newFixedThreadPool(maxConcurrency+1);
@@ -58,7 +66,7 @@ public class SchedulerImpl implements Scheduler{
                 return 0;
             });
 
-    private volatile boolean running = true;
+
 
     /**
      * Consumes jobs from user; which intends to run immediately and store them as a pair of -
@@ -104,14 +112,15 @@ public class SchedulerImpl implements Scheduler{
 
     /**
      * By calling this method execution engine will stops the execution engine and
-     * all pending jobs in queue will not get execute.User will also not able to add any jobs.
+     * all pending jobs in queue will not get execute. User will also not able to add any jobs.
      */
     @Override
     public void stop(){
         running = false;
+        executorService.shutdown();
+        scheduledExecutorService.shutdownNow();
         jobsToBeExecute.clear();
         queue.clear();
-        executorService.shutdown();
     }
 
 
@@ -122,7 +131,6 @@ public class SchedulerImpl implements Scheduler{
         @Override
         public void run() {
             while (running) {
-
                 try {
                     Job freshJob;
                     freshJob = queue.take();
@@ -147,6 +155,7 @@ public class SchedulerImpl implements Scheduler{
         @Override
         public void run() {
             while (running){
+
                 try {
                     if (!jobsToBeExecute.isEmpty() && jobsToBeExecute.firstEntry().getKey() < System.currentTimeMillis()) {
                         for (Job newJob:jobsToBeExecute.firstEntry().getValue()) {

@@ -17,6 +17,7 @@ public class Application {
 
 
         Scheduler scheduler = new SchedulerImpl(1);
+        scheduler.start();
 
         scheduler.add(new Job("J01",new JobConfigurations(Priority.LOW), new RunnableJob()));
 
