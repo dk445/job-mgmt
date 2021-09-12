@@ -138,9 +138,7 @@ public class SchedulerImpl implements Scheduler{
     private class ProcessTaskQueue implements Runnable {
         @Override
         public void run() {
-            System.out.println("ProcessTaskQueue start ####### ");
             while (running) {
-                System.out.println("inside ProcessTaskQueue start ####### ");
                 try {
                     Job freshJob;
                     freshJob = queue.take();
@@ -164,9 +162,7 @@ public class SchedulerImpl implements Scheduler{
     private class ProcessTimedTasks implements Runnable {
         @Override
         public void run() {
-            System.out.println("ProcessTimedTasks start ####### ");
             while (running){
-                System.out.println("inside");
                 try {
                     if (!jobsToBeExecute.isEmpty() && jobsToBeExecute.firstEntry().getKey() < System.currentTimeMillis()) {
                         for (Job newJob:jobsToBeExecute.firstEntry().getValue()) {
