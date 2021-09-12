@@ -55,12 +55,12 @@ public class SchedulerImpl implements Scheduler{
     **/
     private final BlockingQueue<Job> queue = new PriorityBlockingQueue<>(CAPACITY,
             (s, t) -> {
-                if (s.getJobConfigurations().getPriority().getValue() > t.getJobConfigurations().getPriority().getValue())
+                //Used >= to keep the same order in which the job is added if two jobs have same priority.
+                if (s.getJobConfigurations().getPriority().getValue() >= t.getJobConfigurations().getPriority().getValue())
                     return 1;
                 else if (s.getJobConfigurations().getPriority().getValue() < t.getJobConfigurations().getPriority().getValue())
                     return -1;
                 return 0;
-
             });
 
     private volatile boolean running = true;
@@ -104,6 +104,7 @@ public class SchedulerImpl implements Scheduler{
                 try {
                     Job freshJob;
                     freshJob = queue.take();
+                    System.out.println(freshJob);
                     if (freshJob != null) {
                         executorService.submit(freshJob);
                     }
@@ -126,11 +127,12 @@ public class SchedulerImpl implements Scheduler{
         public void run() {
             while (running){
                 try {
-                    if (!jobsToBeExecute.isEmpty() && new Timestamp(jobsToBeExecute.firstEntry().getKey()).before(new Timestamp(System.currentTimeMillis()))) {
+                    if (!jobsToBeExecute.isEmpty() && jobsToBeExecute.firstEntry().getKey() < System.currentTimeMillis()) {
                         for (Job newJob:jobsToBeExecute.firstEntry().getValue()) {
                             newJob.setJobState(State.QUEUED);  // updating jobs status to queued
                         }
-                        queue.addAll(jobsToBeExecute.firstEntry().getValue());
+                        System.out.println(jobsToBeExecute.firstEntry().getValue());
+                        jobsToBeExecute.firstEntry().getValue().forEach( queue::add );
                         jobsToBeExecute.pollFirstEntry();
                     }
                 } catch (Exception ex){
