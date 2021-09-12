@@ -27,11 +27,6 @@ public class SchedulerImpl implements Scheduler{
     private final ExecutorService executorService;
     private final ScheduledExecutorService scheduledExecutorService;
 
-    @Getter
-    private List<String> jobs= new ArrayList<>();
-    @Getter
-    private  List<String> Lastjobs = new ArrayList<>();
-
     private static final Logger log = Logger.getLogger(SchedulerImpl.class.getName());
 
     /**
