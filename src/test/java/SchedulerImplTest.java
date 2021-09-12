@@ -50,6 +50,24 @@ public class SchedulerImplTest {
 
     }
 
+    @Test
+    public void single_thread_scheduled_multiple_job_same_priority() throws Exception{
+
+        Scheduler scheduler = new SchedulerImpl(1);
+        Queue<String> actualOutputQueue = new ConcurrentLinkedQueue<String>();
+
+
+        scheduler.add(new Job("job1", new JobConfigurations(Priority.MEDIUM), new TestJob(actualOutputQueue, "job1")), System.currentTimeMillis()+100);
+        scheduler.add(new Job("job2", new JobConfigurations(Priority.MEDIUM), new TestJob(actualOutputQueue, "job2")), System.currentTimeMillis());
+
+        Thread.sleep( 2000);
+        scheduler.stop();
+
+        Assert.assertEquals(actualOutputQueue,
+                getExpectedOutputQueue(Arrays.asList("job2#1", "job2#2", "job2#3", "job1#1", "job1#2", "job1#3")));
+
+    }
+
 
     private Queue<String> getExpectedOutputQueue(List<String> list){
         Queue<String> queue = new ConcurrentLinkedQueue<String>();
@@ -59,7 +77,7 @@ public class SchedulerImplTest {
         return queue;
     }
 
-    class TestJob implements Runnable {
+    static class TestJob implements Runnable {
 
         private final Queue<String> queue;
         private final String jobId;

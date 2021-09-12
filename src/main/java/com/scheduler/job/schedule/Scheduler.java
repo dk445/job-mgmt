@@ -10,20 +10,23 @@ import com.scheduler.job.job.Job;
 public interface Scheduler {
 
     /**
-     * Consumes jobs from user for which intends to run immediately and store them as a pair of -
-     *  current time & list of job objects that are schedule for that time in Treemap.
-     * @param job - object of class Job with specific job configuration
+     * Adding jobs for execution
+     * @param job
+     * @throws SchedulerImpl.InvalidEngineStateException
      */
-    void add(Job job);
+    void add(Job job) throws SchedulerImpl.InvalidEngineStateException;
 
     /**
-     * Consumes jobs from user for which intends to run on scheduled time and store them as a pair of -
-     * schedule time & list of job objects that are schedule for that time in Treemap.
-     * @param job - object of class Job with specific job configuration
-     * @param scheduleTime- specific time for the job on which it should start executing.
+     * Adding jobs for execution
+     * @param job
+     * @param scheduleTime
+     * @throws SchedulerImpl.InvalidEngineStateException
      */
-    void add(Job job, Long scheduleTime);
+    void add(Job job, Long scheduleTime) throws SchedulerImpl.InvalidEngineStateException;
 
+    /**
+     * Stop the execution engine
+     */
     void stop();
 
 }

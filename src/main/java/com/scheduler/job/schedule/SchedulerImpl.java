@@ -30,7 +30,7 @@ public class SchedulerImpl implements Scheduler{
     private static final Logger log = Logger.getLogger(SchedulerImpl.class.getName());
 
     /**
-     * Create SchedulerImpl isntance.
+     * Create SchedulerImpl instance.
      * @param maxConcurrency the number of jobs that can run in parallel in this scheduler.
      */
     public SchedulerImpl(int maxConcurrency){
@@ -60,30 +60,57 @@ public class SchedulerImpl implements Scheduler{
 
     private volatile boolean running = true;
 
-
+    /**
+     * Consumes jobs from user; which intends to run immediately and store them as a pair of -
+     * current time & list of job objects that are schedule for that time in Treemap.
+     * @param job  object of class Job with specific job configuration
+     * @throws InvalidEngineStateException when user try to add the job while engine is not in running state
+     */
     @Override
-    public void add(Job job) {
-        add(job, System.currentTimeMillis());
-    }
-
-    @Override
-    public void add(Job job, Long scheduleTime) {
-        synchronized (this) {
-            if(jobsToBeExecute.containsKey(scheduleTime)){
-                jobsToBeExecute.get(scheduleTime).add(job);
-            }
-            else {
-                List<Job> jobList = new ArrayList<>();
-
-                jobList.add(job);
-                jobsToBeExecute.put(scheduleTime, jobList);
-            }
+    public void add(Job job) throws InvalidEngineStateException {
+        if(running)
+            add(job, System.currentTimeMillis());
+        else{
+            throw new InvalidEngineStateException("");
         }
     }
 
+    /**
+     * Consumes jobs from user for which intends to run on scheduled time and store them as a pair of -
+     * schedule time & list of job objects that are schedule for that time in Treemap.
+     * @param job - object of class Job with specific job configuration
+     * @param scheduleTime- specific time for the job on which it should start executing.
+     * @throws InvalidEngineStateException when user try to add the job while engine is not in running state
+     */
+    @Override
+    public void add(Job job, Long scheduleTime) throws InvalidEngineStateException {
+        if(running) {
+            synchronized (this) {
+                if (jobsToBeExecute.containsKey(scheduleTime)) {
+                    jobsToBeExecute.get(scheduleTime).add(job);
+                } else {
+                    List<Job> jobList = new ArrayList<>();
+
+                    jobList.add(job);
+                    jobsToBeExecute.put(scheduleTime, jobList);
+                }
+            }
+        }
+        else{
+            throw new InvalidEngineStateException("Engine is not in running state");
+        }
+
+    }
+
+    /**
+     * By calling this method execution engine will stops the execution engine and
+     * all pending jobs in queue will not get execute.User will also not able to add any jobs.
+     */
     @Override
     public void stop(){
         running = false;
+        jobsToBeExecute.clear();
+        queue.clear();
         executorService.shutdown();
     }
 
@@ -132,6 +159,11 @@ public class SchedulerImpl implements Scheduler{
                     log.log(Level.SEVERE, "Exception in ProcessTimedTasks", ex);
                 }
             }
+        }
+    }
+    public class InvalidEngineStateException extends Exception {
+        public InvalidEngineStateException(String errorMessage) {
+            super(errorMessage);
         }
     }
 }
