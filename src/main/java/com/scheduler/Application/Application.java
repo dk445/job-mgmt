@@ -5,13 +5,11 @@ import com.scheduler.job.job.JobConfigurations;
 import com.scheduler.job.enums.Priority;
 import com.scheduler.job.schedule.Scheduler;
 import com.scheduler.job.schedule.SchedulerImpl;
-
-import java.util.Queue;
 import java.util.logging.Logger;
 
 public class Application {
 
-    private static final Logger log = Logger.getLogger(Application.class.getName());
+    private static Logger log = Logger.getLogger(Application.class.getName());
 
     public static void main(String[] args) throws Exception {
 
@@ -26,7 +24,7 @@ public class Application {
         scheduler.add(new Job("J03",new JobConfigurations(Priority.HIGH), new RunnableJob()));
 
         //stop the scheduler after 20 seconds.
-        Thread.sleep(1000 * 2);
+        Thread.sleep(1000 * 20);
         scheduler.stop();
     }
     static class RunnableJob implements Runnable {
@@ -34,7 +32,7 @@ public class Application {
         public void run() {
             for(int i = 1 ; i <= 3 ; i ++) {
                 try {
-                    Thread.sleep(0);
+                    Thread.sleep(500);
                 } catch (InterruptedException e) {
                     e.printStackTrace();
                 }

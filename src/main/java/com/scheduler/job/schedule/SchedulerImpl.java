@@ -38,7 +38,7 @@ public class SchedulerImpl implements Scheduler{
     public SchedulerImpl(int maxConcurrency){
         this.maxConcurrency = maxConcurrency;
     }
-
+    
     @Override
     public void start() {
         running = true;
@@ -79,7 +79,7 @@ public class SchedulerImpl implements Scheduler{
         if(running)
             add(job, System.currentTimeMillis());
         else{
-            throw new InvalidEngineStateException("");
+            throw new InvalidEngineStateException("Engine is not in running state");
         }
     }
 

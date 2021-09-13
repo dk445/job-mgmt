@@ -10,7 +10,7 @@ import com.scheduler.job.job.Job;
 public interface Scheduler {
 
     /**
-     * Stop the scheduler execution engine
+     * Start the scheduler execution engine
      */
     void start();
 
